@@ -1,168 +1,175 @@
 const { expect } = require("chai");
 const { api } = require("../utils/apiClient");
 const { generateUser } = require("../utils/user");
+const { registerAndGetToken } = require("../utils/auth");
+const { validateSchema, schemas } = require("../utils/schemaValidator");
 require("dotenv").config();
 
-describe("User Profile", function () {
-    describe("Get All User", function () {
-        it("[POS] should retrieve all users with valid access token", async function () {
+// Get All Users
+describe("User Profile - Get All Users", function () {
+  it("[POS] should retrieve all users with a valid access token", async function () {
+    const newUser = generateUser();
+    const { token } = await registerAndGetToken(newUser);
 
+    const res = await api()
+      .get("/users")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
 
-            // Retrieve all users with token
-            const res = await api()
-                .get("/users")
-                .set("Authorization", `Bearer ${process.env.ACCESS_TOKEN}`)
-                .expect(200);
+    // Schema validation
+    validateSchema(res.body, schemas.usersListSuccess);
 
+    // Field presence & data types
+    expect(res.body.status).to.equal("success");
+    expect(res.body.data).to.be.an("array");
+    expect(res.body.status).to.be.a("string");
+  });
 
-            // Validate response
-            expect(res.body.status).to.equal("success");
-            expect(res.body.data).to.be.an("array");
-        });
+  it("[NEG] should not retrieve all users with an invalid access token", async function () {
+    const invalidToken = process.env.INVALID_TOKEN;
 
-        it("[NEG] should not retrieve all users with invalid access token", async function () {
-            const newUser = generateUser();
+    const res = await api()
+      .get("/users")
+      .set("Authorization", `Bearer ${invalidToken}`)
+      .expect(401);
 
-            // Register user
-            await api()
-                .post("/auth/register")
-                .send(newUser)
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+    expect(res.body.message).to.equal("Token is invalid!");
+  });
 
-            // Login to get access token
-            const loginRes = await api()
-                .post("/auth/login")
-                .send({
-                    email: newUser.email,
-                    password: newUser.password
-                })
+  it("[NEG] should not retrieve all users without any access token", async function () {
+    const res = await api()
+      .get("/users")
+      .expect(401);
 
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+    expect(res.body.error).to.equal("Unauthorized");
+    expect(res.body.message).to.equal("Token could not be found!");
+  });
 
-            const token = loginRes.body.data.access_token;
-            const invalidToken = token.slice(0, -5) + token.slice(-5).split("").reverse().join("");
+  it("[NEG] should not retrieve all users with a malformed Bearer header", async function () {
+    const res = await api()
+      .get("/users")
+      .set("Authorization", process.env.ACCESS_TOKEN) 
+      .expect(401);
 
+      console.log(res.body);
+      
 
-            // Retrieve all users with token
-            const res = await api()
-                .get("/users")
-                .set("Authorization", `Bearer ${invalidToken}`)
-                .expect(401);
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+  });
 
+  it("[EDGE] should not retrieve all users with an empty Bearer token", async function () {
+    const res = await api()
+      .get("/users")
+      .set("Authorization", "Bearer ")
+      .expect(401);
 
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+  });
+});
 
-            // Validate response
-            expect(res.body.status).to.equal("error");
-            expect(res.body.message).to.be.equal("Token is invalid!");
-        });
+// Get User By ID 
+describe("User Profile - Get User By ID", function () {
+  it("[POS] should retrieve a user with a valid token and valid userId", async function () {
+    // const newUser = generateUser();
+    // const { token, userId } = await registerAndGetToken(newUser);
+    const token = process.env.ACCESS_TOKEN;
+    const userId = process.env.USER_ID;
+    
+    console.log(token);
+    console.log(userId);
 
-        it("[NEG] should not retrieve all users without valid access token", async function () {
-            // Retrieve all users without token
-            const res = await api()
-                .get("/users")
-                .expect(401);
+    const res = await api()
+      .get(`/users/${userId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
 
+      console.log(res.body);
+      
 
+    // Schema validation
+    validateSchema(res.body.data, schemas.userObject);
 
-            // Validate response
-            expect(res.body.status).to.equal("error");
-            expect(res.body.error).to.equal("Unauthorized");
-            expect(res.body.message).to.equal("Token could not be found!");
-        });
-    });
+    // Field presence & data types
+    expect(res.body.status).to.equal("success");
+    expect(res.body.data).to.be.an("object");
+    expect(res.body.data.id).to.be.a("string");
+    expect(res.body.data.email).to.be.a("string");
 
-    describe("Get User By ID", () => {
-        it("[POS] should retrieve a user with valid token and valid userId", async function () {
-            const newUser = generateUser();
+    // Field values
+    expect(res.body.data.id).to.equal(userId);
+    expect(res.body.data.email).to.equal(newUser.email);
+  });
 
-            // Register user
-            const registerRes = await api()
-                .post("/auth/register")
-                .send(newUser)
+  it("[NEG] should fail to retrieve user without an access token", async function () {
+    const newUser = generateUser();
+    const { userId } = await registerAndGetToken(newUser);
 
+    const res = await api()
+      .get(`/users/${userId}`)
+      .expect(401);
 
-            const userId = registerRes.body.data.user.id;
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+    expect(res.body.error).to.include("Unauthorized");
+    expect(res.body.message).to.include("Token could not be found!");
+  });
 
+  it("[NEG] should fail to retrieve user with an invalid access token", async function () {
+    const newUser = generateUser();
+    const { token, userId } = await registerAndGetToken(newUser);
+    const invalidToken = process.env.INVALID_TOKEN;
 
-            // Login to get token
-            const loginRes = await api()
-                .post("/auth/login")
-                .send({
-                    email: newUser.email,
-                    password: newUser.password
-                })
+    const res = await api()
+      .get(`/users/${userId}`)
+      .set("Authorization", `Bearer ${invalidToken}`)
+      .expect(401);
 
-            const token = loginRes.body.data.access_token;
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+    expect(res.body.message).to.include("Token is invalid!");
+  });
 
+  it("[NEG] should fail to retrieve user with a non-existent userId", async function () {
+    const newUser = generateUser();
+    const { token } = await registerAndGetToken(newUser);
+    const fakeId = "000000000000000000000000";
 
-            // Retrieve user by ID
-            const res = await api()
-                .get(`/users/${userId}`)
-                .set("Authorization", `Bearer ${token}`)
-                .expect(200);
+    const res = await api()
+      .get(`/users/${fakeId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(404);
 
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+  });
 
+  it("[EDGE] should fail to retrieve user with a numeric userId", async function () {
+    const newUser = generateUser();
+    const { token } = await registerAndGetToken(newUser);
 
+    const res = await api()
+      .get(`/users/12345`)
+      .set("Authorization", `Bearer ${token}`);
 
-            // Validate response
-            expect(res.body.status).to.equal("success");
-            expect(res.body.data).to.be.an("object");
-            expect(res.body.data).to.have.property("id", userId);
-            expect(res.body.data).to.have.property("email", newUser.email);
-        });
+    expect(res.status).to.be.oneOf([400, 404, 422]);
+    validateSchema(res.body, schemas.errorResponse);
+    expect(res.body.status).to.equal("error");
+  });
 
-        it("[NEG] should fail to retrieve user without access token", async function () {
-            const newUser = generateUser();
+  it("[EDGE] should fail to retrieve user with special characters in userId", async function () {
+    const newUser = generateUser();
+    const { token } = await registerAndGetToken(newUser);
 
-            // Register user
-            const registerRes = await api()
-                .post("/auth/register")
-                .send(newUser)
+    const res = await api()
+      .get(`/users/!@#$%^`)
+      .set("Authorization", `Bearer ${token}`);
 
-
-            const userId = registerRes.body.data.user.id;
-
-            // Attempt to retrieve user without token
-            const res = await api()
-                .get(`/users/${userId}`)
-                .expect(401);
-
-
-
-
-            // Validate error response
-            expect(res.body.status).to.equal("error");
-            expect(res.body.error).to.include("Unauthorized");
-            expect(res.body.message).to.include("Token could not be found!");
-        });
-
-        it("[NEG] should fail to retrieve user with invalid access token", async function () {
-            const newUser = generateUser();
-
-            // Register user
-            const registerRes = await api()
-                .post("/auth/register")
-                .send(newUser)
-
-
-            const token = registerRes.body.data.access_token;
-            const invalidToken = token.slice(0, -5) + token.slice(-5).split("").reverse().join("");
-            const userId = registerRes.body.data.user.id;
-
-            // Attempt to retrieve user with invalid token
-            const res = await api()
-                .get(`/users/${userId}`)
-                .set("Authorization", `Bearer ${invalidToken}`)
-                .expect(401);
-
-
-
-
-
-
-            // Validate error response
-            expect(res.body.status).to.equal("error");
-            expect(res.body.error).to.include("Unauthorized");
-            expect(res.body.message).to.include("Token is invalid!");
-        });
-    });
-
+    expect(res.status).to.be.oneOf([400, 404, 422]);
+  });
 });

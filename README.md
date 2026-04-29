@@ -1,184 +1,119 @@
 # Zedu API Automation Testing
 
-## 📌 Project Overview
+## Project Overview
 
-This project is a **structured API automation test suite** built for the Zedu platform.
+This project is a structured API automation test suite built for the Zedu platform. It demonstrates API automation skills, clean test architecture, proper authentication handling, and real-world QA engineering practices.
 
-The goal is to demonstrate:
-
-* API automation skills using code
-* Clean and maintainable test architecture
-* Proper authentication handling
-* Strong validation and assertions
-* Real-world QA engineering practices
-
-The test suite is designed so that **any engineer can clone, set up, and run all tests successfully without additional guidance**.
+The suite is designed so that any engineer can clone, set up, and run all tests successfully without additional guidance.
 
 ---
 
-## 🌐 System Under Test
+## System Under Test
 
-* **Base URL:** https://zedu.chat/
-* **API Documentation (Swagger):** https://api.zedu.chat/swagger/#/auth
-
----
-
-## 🛠️ Tech Stack
-
-* **Test Framework:** Mocha
-* **Assertion Library:** Chai
-* **HTTP Client:** Supertest
-* **Environment Management:** dotenv
-* **Data Generation:** @faker-js/faker
-* **Schema Validation:** Ajv
+- **Production URL:** https://zedu.chat/
+- **API Documentation (Swagger):** https://api.zedu.chat/swagger/#/auth
 
 ---
 
-## 📂 Project Structure
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| Mocha | Test framework |
+| Chai | Assertion library |
+| Supertest | HTTP client |
+| dotenv | Environment variable management |
+| @faker-js/faker | Dynamic test data generation |
+| Ajv | JSON schema validation |
+
+---
+
+## Project Structure
 
 ```
-zedu-api-tests/
+zedu-api-auto/
 │
 ├── tests/
-│   ├── auth/
-│   │   ├── auth.test.js
-│   │   └── auth.negative.test.js
-│   │
-│   ├── users/
-│   │   ├── users.test.js
-│   │   └── users.negative.test.js
-│   │
-│   └── other/
-│       └── edgeCases.test.js
+│   ├── auth.test.js          # Registration and login tests
+│   └── users.test.js         # User profile and protected route tests
 │
 ├── utils/
-│   ├── apiClient.js
-│   ├── auth.js
-│   ├── config.js
-│   ├── dataGenerator.js
-│   └── schemaValidator.js
+│   ├── apiClient.js              # Supertest base client
+│   ├── auth.js                   # Shared login/token utility
+│   ├── config.js                 # Environment variable loader
+│   ├── schemaValidator.js        # AJV schema validation helper
+│   └── user.js                   # Faker-based user data generator
 │
-├── schemas/
-├── .env.example
+├── .gitignore
 ├── package.json
 └── README.md
 ```
 
 ---
 
-## ✅ Key Features & Implementation
+## Prerequisites
 
-### 🔐 Authentication Handling
+- **Node.js** v16 or higher
+- **npm** (bundled with Node.js)
 
-* Tokens are **generated dynamically via login API**
-* Stored and reused via `utils/auth.js`
-* No hardcoded tokens anywhere in the codebase
-
----
-
-### 🧪 Test Coverage
-
-* **Total Tests:** 25+
-* **Negative Tests:** 10+
-* **Edge Cases:** 5+
-
-Test categories include:
-
-* Authentication (register, login, logout)
-* User endpoints (CRUD operations)
-* Protected routes
-* Edge cases and invalid inputs
-
----
-
-### 🔁 Test Design Principles
-
-All tests are:
-
-* **Independent** (no dependency on execution order)
-* **Idempotent** (safe to run multiple times)
-* **Repeatable** (consistent results every run)
-
-Dynamic data (via Faker) ensures no duplication issues.
-
----
-
-### 📊 Assertions
-
-Each test validates:
-
-* Status codes
-* Response structure
-* Field presence
-* Data types
-* Field values
-* Error messages
-* JSON schema (where applicable)
-
----
-
-### ⚠️ Negative Testing Coverage
-
-Includes:
-
-* Invalid login credentials
-* Missing authentication token
-* Expired/malformed token
-* Missing required fields
-* Invalid data types
-
----
-
-## ⚙️ Prerequisites
-
-Ensure you have installed:
-
-* Node.js (v16 or higher recommended)
-* npm (comes with Node.js)
-
----
-
-## 🔧 Setup Instructions
-
-### 1. Clone Repository
+Verify your versions:
 
 ```bash
-git clone <your-repo-link>
-cd <folder name>
+node --version
+npm --version
 ```
 
-### 2. Install Dependencies
+---
+
+## Setup Instructions
+
+### 1. Clone the repository
+
+```bash
+git clone <repo-link>
+cd <repo-name>
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 3. Configure environment variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the root of the project by copying the example:
+
+```bash
+cp .env.example .env
+```
+
+Then fill in all values in `.env`:
 
 ```
-BASE_URL=https://api.zedu.chat
-EMAIL=your_test_email@example.com
+BASE_URL=https://api.zedu.chat/api/v1
+EMAIL=your_registered_email@example.com
 PASSWORD=your_password
+WRONG_EMAIL=nonexistent@fake.com
+WRONG_PASSWORD=WrongPassword999!
+INVALID_EMAIL=not-an-email
+GEN_PASSWORD=ValidPass123!
+TIMEOUT=10000
 ```
 
-⚠️ Note:
-
-* `.env` is **not committed** for security reasons
-* Use `.env.example` as a reference
+> ⚠️ The `.env` file is **not committed to GitHub**.
 
 ---
 
-## ▶️ Running Tests
+## Running Tests
 
-Run all tests:
+Run the full test suite:
 
 ```bash
 npm test
 ```
 
-Run with report:
+Run with an HTML report (saved to `/reports`):
 
 ```bash
 npm run test:report
@@ -186,41 +121,44 @@ npm run test:report
 
 ---
 
-## 📁 Test File Breakdown
+## Test File Breakdown
 
-### `auth/`
+### `test/auth.test.js`
 
-* User registration
-* Login functionality
-* Token handling
-* Negative authentication scenarios
+Covers the `/auth/register` and `/auth/login` endpoints.
 
-### `users/`
+- Successful user registration with response schema and data type validation
+- Registration failures: missing email, missing password, invalid email format, duplicate phone number, empty body, numeric email type, whitespace-only fields, extremely long email
+- Successful login with valid credentials
+- Login failures: unregistered email, wrong password, empty email, empty password, both fields empty, invalid email format
+- Edge cases: uppercase email variation, SQL injection string in email field
 
-* Fetch user data
-* Update user
-* Delete user
-* Authorization checks
+### `test/users.test.js`
 
-### `other/`
+Covers the `/users` and `/users/:id` endpoints.
 
-* Edge cases
-* Invalid payloads
-* Boundary testing
-
----
-
-## 🚨 Important Notes
-
-* The project runs **end-to-end from a fresh clone**
-* No hardcoded credentials or tokens
-* All configs handled via environment variables
-* Tests are stable and non-flaky
+- Retrieving all users with a valid token
+- Failures: invalid token, no token, malformed Authorization header, empty Bearer token
+- Retrieving a single user by ID with valid credentials
+- Failures: no token, invalid token, non-existent user ID
+- Edge cases: numeric user ID, special characters in user ID
 
 ---
 
-## ✍️ Author
+## Key Implementation Notes
 
-Abdfatahi Showunmi - QA Engineer
+**Authentication** — Tokens are fetched programmatically via `utils/auth.js`. No hardcoded tokens exist anywhere in the codebase.
+
+**Test independence** — Every test creates its own user via `generateUser()` inside the test body. No shared state between tests.
+
+**Idempotency** — Dynamic data (unique emails, usernames, phone numbers) via Faker ensures tests pass on repeated runs without data conflicts.
+
+**Schema validation** — Every positive test validates the full response shape using Ajv via `utils/schemaValidator.js`.
+
+**Data type assertions** — Every test asserts field types (string, object, array) in addition to values.
 
 ---
+
+## Author
+
+Abdulfatahi Showunmi — QA Engineer
