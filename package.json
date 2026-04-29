@@ -1,0 +1,25 @@
+{
+  "name": "zedu-api-auto",
+  "version": "1.0.0",
+  "description": "API automation testing for Zedu platform",
+  "license": "ISC",
+  "author": "Abdulfatahi Showunmi",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/**/*.test.js --timeout 10000"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "chai": "^6.2.2",
+    "dotenv": "^17.4.2",
+    "supertest": "^7.2.2",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^10.4.0",
+    "eslint": "^10.2.1",
+    "mocha": "^11.7.5",
+    "mochawesome": "^7.1.4"
+  }
+}
