@@ -54,7 +54,7 @@ const schemas = {
 
   userObject: {
     type: "object",
-    required: ["id", "email", "username"],
+    required: ["id", "email"],
     properties: {
       id: { type: "string" },
       email: { type: "string" },

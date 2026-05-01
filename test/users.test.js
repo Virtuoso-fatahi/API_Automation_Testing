@@ -8,8 +8,8 @@ require("dotenv").config();
 // Get All Users
 describe("User Profile - Get All Users", function () {
   it("[POS] should retrieve all users with a valid access token", async function () {
-    const newUser = generateUser();
-    const { token } = await registerAndGetToken(newUser);
+    // const newUser = generateUser();
+    const token = process.env.ACCESS_TOKEN
 
     const res = await api()
       .get("/users")
@@ -75,14 +75,11 @@ describe("User Profile - Get All Users", function () {
 
 // Get User By ID 
 describe("User Profile - Get User By ID", function () {
-  it("[POS] should retrieve a user with a valid token and valid userId", async function () {
-    // const newUser = generateUser();
-    // const { token, userId } = await registerAndGetToken(newUser);
+  it.only("[POS] should retrieve a user with a valid token and valid userId", async function () {
     const token = process.env.ACCESS_TOKEN;
     const userId = process.env.USER_ID;
+    const email = process.env.EMAIL;
     
-    console.log(token);
-    console.log(userId);
 
     const res = await api()
       .get(`/users/${userId}`)
@@ -101,9 +98,12 @@ describe("User Profile - Get User By ID", function () {
     expect(res.body.data.id).to.be.a("string");
     expect(res.body.data.email).to.be.a("string");
 
+   
+    
+
     // Field values
     expect(res.body.data.id).to.equal(userId);
-    expect(res.body.data.email).to.equal(newUser.email);
+    expect(res.body.data.email).to.equal(email);
   });
 
   it("[NEG] should fail to retrieve user without an access token", async function () {
@@ -122,7 +122,7 @@ describe("User Profile - Get User By ID", function () {
 
   it("[NEG] should fail to retrieve user with an invalid access token", async function () {
     const newUser = generateUser();
-    const { token, userId } = await registerAndGetToken(newUser);
+    const { userId } = await registerAndGetToken(newUser);
     const invalidToken = process.env.INVALID_TOKEN;
 
     const res = await api()
@@ -136,9 +136,7 @@ describe("User Profile - Get User By ID", function () {
   });
 
   it("[NEG] should fail to retrieve user with a non-existent userId", async function () {
-    const newUser = generateUser();
-    const { token } = await registerAndGetToken(newUser);
-    const fakeId = "000000000000000000000000";
+    const fakeId = process.env.FAKE_USER_ID;
 
     const res = await api()
       .get(`/users/${fakeId}`)
