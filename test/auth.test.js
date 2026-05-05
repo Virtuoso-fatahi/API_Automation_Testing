@@ -77,7 +77,6 @@ describe("User Registration", function () {
 
   it("[NEG] should fail to register with a duplicate phone number", async function () {
     const newUser = generateUser();
-
     await api().post("/auth/register").send(newUser);
 
     const res = await api()
@@ -169,7 +168,6 @@ describe("User Login", function () {
         password: userPassword
       })
     .expect(200);
-
 
     // Schema validation
     validateSchema(res.body, schemas.authSuccess);
