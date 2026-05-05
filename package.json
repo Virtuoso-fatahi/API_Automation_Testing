@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/**/*.test.js --timeout 10000"
+    "test": "mocha test/**/*.js --reporter mochawesome --reporter-options reportDir=reports,reportFilename=test-report --exit"
   },
   "dependencies": {
     "ajv": "^8.20.0",
