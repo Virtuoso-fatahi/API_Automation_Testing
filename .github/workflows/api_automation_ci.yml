@@ -27,6 +27,22 @@ jobs:
 
       - name: Run tests
         run: npm test
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          EMAIL: ${{ secrets.EMAIL }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          INVALID_EMAIL: ${{ secrets.INVALID_EMAIL }}
+          GEN_PASSWORD: ${{ secrets.GEN_PASSWORD }}
+          WRONG_EMAIL: ${{ secrets.WRONG_EMAIL }}
+          WRONG_PASSWORD: ${{ secrets.WRONG_PASSWORD }}
+          TIMEOUT: ${{ secrets.TIMEOUT }}
+          EMAIL_DOMAIN: ${{ secrets.EMAIL_DOMAIN }}
+          NUMERIC_EMAIL: ${{ secrets.NUMERIC_EMAIL }}
+          EMAIL_INJECTION: ${{ secrets.EMAIL_INJECTION }}
+          INVALID_TOKEN: ${{ secrets.INVALID_TOKEN }}
+          FAKE_USER_ID: ${{ secrets.FAKE_USER_ID }}
+          SPECIAL_CHAR_USER_ID: ${{ secrets.SPECIAL_CHAR_USER_ID }}
+
 
       - name: Upload Mochawesome report
         if: always()
