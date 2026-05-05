@@ -43,7 +43,6 @@ jobs:
           FAKE_USER_ID: ${{ secrets.FAKE_USER_ID }}
           SPECIAL_CHAR_USER_ID: ${{ secrets.SPECIAL_CHAR_USER_ID }}
 
-
       - name: Upload Mochawesome report
         if: always()
         uses: actions/upload-artifact@v4
