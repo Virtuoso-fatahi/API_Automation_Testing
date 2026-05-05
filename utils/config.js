@@ -10,8 +10,6 @@ function required(key) {
 
 const config = {
   BASE_URL: required("BASE_URL"),
-  EMAIL: required("EMAIL"),
-  PASSWORD: required("PASSWORD"),
   TIMEOUT: process.env.TIMEOUT || 10000
 };
 

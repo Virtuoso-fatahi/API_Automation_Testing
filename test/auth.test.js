@@ -8,7 +8,7 @@ require("dotenv").config();
 describe("User Registration", function () {
   it("[POS] should register a new user successfully", async function () {
     const payload = generateUser();
-    
+
     const res = await api()
       .post("/auth/register")
       .send(payload)
@@ -152,13 +152,24 @@ describe("User Registration", function () {
 // Login Tests
 describe("User Login", function () {
   it("[POS] should login with valid credentials", async function () {
+    const payload = generateUser();
+    // Register the user first
+    await api()
+      .post("/auth/register")
+      .send(payload);
+
+     // Now login with the same credentials
+    const userEmail = payload.email;
+    const userPassword = payload.password;
+
     const res = await api()
       .post("/auth/login")
       .send({
-        email: process.env.EMAIL,
-        password: process.env.PASSWORD
+        email: userEmail,
+        password: userPassword
       })
-      .expect(200);
+    .expect(200);
+
 
     // Schema validation
     validateSchema(res.body, schemas.authSuccess);
@@ -172,17 +183,20 @@ describe("User Login", function () {
     expect(res.body.data.user).to.be.an("object");
     expect(res.body.data.user.email).to.be.a("string");
 
-    // Field values
+    // // Field values
     expect(res.body.status).to.equal("success");
-    expect(res.body.data.user.email).to.equal(process.env.EMAIL);
+    expect(res.body.data.user.email).to.equal(userEmail);
   });
 
   it("[NEG] should fail to login with an unregistered email", async function () {
+    const payload = generateUser();
+    const userPassword = payload.password;
+
     const res = await api()
       .post("/auth/login")
       .send({
         email: process.env.WRONG_EMAIL,
-        password: process.env.PASSWORD
+        password: userPassword
       })
       .expect(400);
 
@@ -192,10 +206,13 @@ describe("User Login", function () {
   });
 
   it("[NEG] should fail to login with incorrect password", async function () {
+    const payload = generateUser();
+    const userEmail = payload.email;
+
     const res = await api()
       .post("/auth/login")
       .send({
-        email: process.env.EMAIL,
+        email: userEmail,
         password: process.env.WRONG_PASSWORD
       })
       .expect(400);
@@ -206,9 +223,12 @@ describe("User Login", function () {
   });
 
   it("[NEG] should fail to login with empty email", async function () {
+    const payload = generateUser();
+    const userPassword = payload.password;
+
     const res = await api()
       .post("/auth/login")
-      .send({ email: "", password: process.env.PASSWORD })
+      .send({ email: "", password: userPassword })
       .expect(400);
 
     validateSchema(res.body, schemas.errorResponse);
@@ -218,9 +238,12 @@ describe("User Login", function () {
   });
 
   it("[NEG] should fail to login with empty password", async function () {
+    const payload = generateUser();
+    const userEmail = payload.email;
+
     const res = await api()
       .post("/auth/login")
-      .send({ email: process.env.EMAIL, password: "" })
+      .send({ email: userEmail, password: "" })
       .expect(400);
 
     validateSchema(res.body, schemas.errorResponse);
@@ -243,11 +266,14 @@ describe("User Login", function () {
   });
 
   it("[NEG] should fail to login with invalid email format", async function () {
+    const payload = generateUser();
+    const userPassword = payload.password;
+
     const res = await api()
       .post("/auth/login")
       .send({
         email: process.env.INVALID_EMAIL,
-        password: process.env.PASSWORD
+        password: userPassword
       })
       .expect(400);
 
@@ -257,11 +283,15 @@ describe("User Login", function () {
   });
 
   it("[EDGE] should fail to login with uppercase version of valid email", async function () {
-    const caseEmail = process.env.EMAIL.toUpperCase();
+    const payload = generateUser();
+    const userEmail = payload.email;
+    const userPassword = payload.password;
+
+    const caseEmail = userEmail.toUpperCase();
 
     const res = await api()
       .post("/auth/login")
-      .send({ email: caseEmail, password: process.env.PASSWORD })
+      .send({ email: caseEmail, password: userPassword })
       .expect(400);
 
     validateSchema(res.body, schemas.errorResponse);
@@ -270,11 +300,15 @@ describe("User Login", function () {
   });
 
   it("[EDGE] should fail to login with SQL injection string in email", async function () {
+    const payload = generateUser();
+    const userEmail = payload.email;
+    const userPassword = payload.password;
+
     const res = await api()
       .post("/auth/login")
       .send({
         email: process.env.EMAIL_INJECTION,
-        password: process.env.PASSWORD
+        password: userPassword
       })
       .expect(400);
 

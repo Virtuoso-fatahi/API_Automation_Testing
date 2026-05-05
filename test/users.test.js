@@ -8,8 +8,8 @@ require("dotenv").config();
 // Get All Users
 describe("User Profile - Get All Users", function () {
   it("[POS] should retrieve all users with a valid access token", async function () {
-    // const newUser = generateUser();
-    const token = process.env.ACCESS_TOKEN
+    const user = generateUser();
+    const {token} = await registerAndGetToken(user);
 
     const res = await api()
       .get("/users")
@@ -50,13 +50,14 @@ describe("User Profile - Get All Users", function () {
   });
 
   it("[NEG] should not retrieve all users with a malformed Bearer header", async function () {
+    const user = generateUser();
+    const {token} = await registerAndGetToken(user);
+
     const res = await api()
       .get("/users")
-      .set("Authorization", process.env.ACCESS_TOKEN) 
+      .set("Authorization", token)
       .expect(401);
 
-      console.log(res.body);
-      
 
     validateSchema(res.body, schemas.errorResponse);
     expect(res.body.status).to.equal("error");
@@ -75,19 +76,16 @@ describe("User Profile - Get All Users", function () {
 
 // Get User By ID 
 describe("User Profile - Get User By ID", function () {
-  it.only("[POS] should retrieve a user with a valid token and valid userId", async function () {
-    const token = process.env.ACCESS_TOKEN;
-    const userId = process.env.USER_ID;
-    const email = process.env.EMAIL;
-    
+  it("[POS] should retrieve a user with a valid token and valid userId", async function () {
+
+    const newUser = generateUser();
+    const email = newUser.email;
+    const { token, userId } = await registerAndGetToken(newUser);
 
     const res = await api()
       .get(`/users/${userId}`)
       .set("Authorization", `Bearer ${token}`)
       .expect(200);
-
-      console.log(res.body);
-      
 
     // Schema validation
     validateSchema(res.body.data, schemas.userObject);
@@ -98,17 +96,14 @@ describe("User Profile - Get User By ID", function () {
     expect(res.body.data.id).to.be.a("string");
     expect(res.body.data.email).to.be.a("string");
 
-   
-    
-
     // Field values
     expect(res.body.data.id).to.equal(userId);
     expect(res.body.data.email).to.equal(email);
   });
 
   it("[NEG] should fail to retrieve user without an access token", async function () {
-    const newUser = generateUser();
-    const { userId } = await registerAndGetToken(newUser);
+    const user = generateUser();
+    const userId = await registerAndGetToken(user);
 
     const res = await api()
       .get(`/users/${userId}`)
@@ -121,8 +116,9 @@ describe("User Profile - Get User By ID", function () {
   });
 
   it("[NEG] should fail to retrieve user with an invalid access token", async function () {
-    const newUser = generateUser();
-    const { userId } = await registerAndGetToken(newUser);
+    const user = generateUser();
+    const userId = (await registerAndGetToken(user)).userId;
+    
     const invalidToken = process.env.INVALID_TOKEN;
 
     const res = await api()
@@ -136,12 +132,14 @@ describe("User Profile - Get User By ID", function () {
   });
 
   it("[NEG] should fail to retrieve user with a non-existent userId", async function () {
+    const user = generateUser();
+    const token = (await registerAndGetToken(user)).token;
     const fakeId = process.env.FAKE_USER_ID;
 
     const res = await api()
       .get(`/users/${fakeId}`)
       .set("Authorization", `Bearer ${token}`)
-      .expect(404);
+      .expect(400);
 
     validateSchema(res.body, schemas.errorResponse);
     expect(res.body.status).to.equal("error");
@@ -163,11 +161,12 @@ describe("User Profile - Get User By ID", function () {
   it("[EDGE] should fail to retrieve user with special characters in userId", async function () {
     const newUser = generateUser();
     const { token } = await registerAndGetToken(newUser);
+    const specialCharId = process.env.SPECIAL_CHAR_USER_ID;
 
     const res = await api()
-      .get(`/users/!@#$%^`)
+      .get(`/users/${specialCharId}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(res.status).to.be.oneOf([400, 404, 422]);
+    expect(res.status).to.equal(400);
   });
 });

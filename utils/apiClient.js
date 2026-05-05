@@ -5,12 +5,6 @@ function api() {
   return request(BASE_URL);
 }
 
-// Helper for authenticated requests
-function withAuth(req, token) {
-  return req.set("Authorization", `Bearer ${token}`);
-}
-
 module.exports = {
-  api,
-  withAuth
+  api
 };
