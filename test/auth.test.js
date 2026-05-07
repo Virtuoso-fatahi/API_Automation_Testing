@@ -167,7 +167,7 @@ describe("User Login", function () {
         email: userEmail,
         password: userPassword
       })
-    .expect(200);
+    .expect(204);
 
     // Schema validation
     validateSchema(res.body, schemas.authSuccess);
